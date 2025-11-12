@@ -4,7 +4,7 @@
  */
 
 import React from 'react';
-import { GameState } from '../../types';
+import type { GameState } from '../../types';
 import PlayerPosition from './PlayerPosition';
 import CommunityCards from './CommunityCards';
 

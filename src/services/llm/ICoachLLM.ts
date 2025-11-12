@@ -3,7 +3,7 @@
  * Allows easy swapping between different LLM providers
  */
 
-import { CoachAnalysis, HandHistory } from '../../types';
+import type { CoachAnalysis, HandHistory } from '../../types';
 
 export interface ICoachLLM {
   /**

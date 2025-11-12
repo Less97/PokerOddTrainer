@@ -4,7 +4,7 @@
  */
 
 import React from 'react';
-import { Action } from '../../types';
+import type { Action } from '../../types';
 
 interface ActionLogProps {
   actions: Action[];

@@ -4,7 +4,7 @@
  */
 
 import React from 'react';
-import { Player, PlayerPosition as Position } from '../../types';
+import type { Player, PlayerPosition as Position } from '../../types';
 
 interface PlayerPositionProps {
   player: Player;

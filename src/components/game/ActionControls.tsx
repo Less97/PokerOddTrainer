@@ -4,7 +4,7 @@
  */
 
 import React from 'react';
-import { BetAction } from '../../types';
+import type { BetAction } from '../../types';
 
 interface ActionControlsProps {
   currentBet: number;
