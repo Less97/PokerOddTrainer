@@ -2,7 +2,7 @@
  * Main game state management hook
  */
 
-import { useState, useCallback, useEffect, useRef } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import type { GameState, Player, BetAction } from '../types';
 import { useDeck } from './useDeck';
 import { useHandHistory } from './useHandHistory';
@@ -37,8 +37,8 @@ export function useGameState(): UseGameStateReturn {
   const { deal, shuffleNewDeck } = useDeck();
   const { addAction, clearHistory } = useHandHistory();
 
-  // Store AI opponents - must be before useState
-  const aiOpponents = useRef<Map<string, AIOpponent>>(new Map());
+  // Initialize AI opponents map outside of any closure
+  const [aiOpponentsMap] = useState(() => new Map<string, AIOpponent>());
 
   const [gameState, setGameState] = useState<GameState>(() => initializeGame());
 
@@ -113,11 +113,11 @@ export function useGameState(): UseGameStateReturn {
     shuffleNewDeck();
 
     // Initialize AI opponents if not already done
-    if (aiOpponents.current.size === 0) {
+    if (aiOpponentsMap.size === 0) {
       const opponentStyles = assignOpponentStyles();
       opponentStyles.forEach((styleConfig, index) => {
         const position = `opponent${index + 1}`;
-        aiOpponents.current.set(position, new AIOpponent(styleConfig));
+        aiOpponentsMap.set(position, new AIOpponent(styleConfig));
       });
     }
 
@@ -140,7 +140,7 @@ export function useGameState(): UseGameStateReturn {
         const opponentPositions = ['opponent1', 'opponent2', 'opponent3'];
         resetPlayers = resetPlayers.map(player => {
           if (opponentPositions.includes(player.position)) {
-            const aiOpponent = aiOpponents.current.get(player.position);
+            const aiOpponent = aiOpponentsMap.get(player.position);
             if (aiOpponent) {
               const styleConfig = (aiOpponent as any).styleConfig;
               return {
@@ -202,7 +202,7 @@ export function useGameState(): UseGameStateReturn {
         actionHistory: [],
       };
     });
-  }, [deal, shuffleNewDeck, clearHistory]);
+  }, [deal, shuffleNewDeck, clearHistory, aiOpponentsMap]);
 
   /**
    * Handle a player action
@@ -327,7 +327,7 @@ export function useGameState(): UseGameStateReturn {
     ) {
       // Add small delay for better UX
       const timeoutId = setTimeout(() => {
-        const aiOpponent = aiOpponents.current.get(currentPlayer.position);
+        const aiOpponent = aiOpponentsMap.get(currentPlayer.position);
         if (aiOpponent) {
           const action = aiOpponent.decide(currentPlayer, gameState);
           handlePlayerAction(action);
@@ -336,7 +336,7 @@ export function useGameState(): UseGameStateReturn {
 
       return () => clearTimeout(timeoutId);
     }
-  }, [gameState, handlePlayerAction]);
+  }, [gameState, handlePlayerAction, aiOpponentsMap]);
 
   /**
    * Check if it's hero's turn
