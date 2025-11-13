@@ -73,11 +73,47 @@ export function getCallAmount(player: Player, currentBet: number): number {
 export function isBettingRoundComplete(players: Player[], currentBet: number): boolean {
   const activePlayers = players.filter(p => !p.isFolded && !p.isAllIn);
 
+  // If no active players remain (all folded or all-in), round is complete
   if (activePlayers.length === 0) return true;
+
+  // If only one active player remains, round is complete
   if (activePlayers.length === 1) return true;
 
   // All active players must have matched the current bet
   return activePlayers.every(p => p.currentBet === currentBet);
+}
+
+/**
+ * Count the number of raises/re-raises in current betting round from action history
+ * @param actionHistory - All actions in the hand
+ * @param currentRound - Current betting round
+ * @returns Number of raises this round
+ */
+export function countRaisesInRound(
+  actionHistory: { action: string; bettingRound?: string }[],
+  currentRound: string
+): number {
+  return actionHistory.filter(
+    action =>
+      action.bettingRound === currentRound &&
+      (action.action === 'raise' || action.action === 'all-in')
+  ).length;
+}
+
+/**
+ * Check if raise cap has been reached (prevents endless raising wars)
+ * @param actionHistory - All actions in the hand
+ * @param currentRound - Current betting round
+ * @param maxRaises - Maximum raises allowed (default: 4)
+ * @returns true if no more raises allowed
+ */
+export function hasReachedRaiseCap(
+  actionHistory: { action: string; bettingRound?: string }[],
+  currentRound: string,
+  maxRaises: number = 4
+): boolean {
+  const raiseCount = countRaisesInRound(actionHistory, currentRound);
+  return raiseCount >= maxRaises;
 }
 
 /**

@@ -35,24 +35,21 @@ const Card: React.FC<CardProps> = ({ card, size = 'medium', faceDown = false }) 
     switch (size) {
       case 'small':
         return {
-          container: 'w-14 h-20',
+          container: 'w-12 h-16',
           rank: 'text-xl',
-          suit: 'text-2xl',
-          corner: 'text-xs',
+          suit: 'text-xl',
         };
       case 'medium':
         return {
-          container: 'w-20 h-28',
-          rank: 'text-3xl',
-          suit: 'text-4xl',
-          corner: 'text-sm',
+          container: 'w-16 h-22',
+          rank: 'text-2xl',
+          suit: 'text-2xl',
         };
       case 'large':
         return {
-          container: 'w-24 h-36',
-          rank: 'text-4xl',
-          suit: 'text-5xl',
-          corner: 'text-base',
+          container: 'w-18 h-26',
+          rank: 'text-3xl',
+          suit: 'text-3xl',
         };
     }
   };
@@ -87,26 +84,12 @@ const Card: React.FC<CardProps> = ({ card, size = 'medium', faceDown = false }) 
 
   return (
     <div
-      className={`${sizeClasses.container} rounded-lg border-2 border-gray-300 bg-white shadow-lg flex flex-col justify-between p-1.5 relative`}
+      className={`${sizeClasses.container} rounded-lg border-2 border-gray-300 bg-white shadow-lg flex items-center justify-center`}
     >
-      {/* Top-left corner */}
-      <div className={`${suitColor} font-bold leading-none flex flex-col items-center`}>
-        <div className={sizeClasses.corner}>{card.rank}</div>
-        <div className={sizeClasses.corner}>{suitSymbol}</div>
-      </div>
-
-      {/* Center suit symbol */}
-      <div className={`${suitColor} flex items-center justify-center flex-1`}>
-        <div className="flex flex-col items-center">
-          <span className={`${sizeClasses.rank} font-bold leading-none`}>{card.rank}</span>
-          <span className={`${sizeClasses.suit} leading-none mt-1`}>{suitSymbol}</span>
-        </div>
-      </div>
-
-      {/* Bottom-right corner (rotated) */}
-      <div className={`${suitColor} font-bold leading-none flex flex-col items-center rotate-180`}>
-        <div className={sizeClasses.corner}>{card.rank}</div>
-        <div className={sizeClasses.corner}>{suitSymbol}</div>
+      {/* Center display only - clear and simple */}
+      <div className={`${suitColor} flex flex-col items-center gap-0.5`}>
+        <span className={`${sizeClasses.rank} font-bold leading-none`}>{card.rank}</span>
+        <span className={`${sizeClasses.suit} leading-none`}>{suitSymbol}</span>
       </div>
     </div>
   );
