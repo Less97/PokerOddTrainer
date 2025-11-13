@@ -229,6 +229,7 @@ export function useGameState(): UseGameStateReturn {
         action: action.type,
         amount: action.amount || 0,
         timestamp: Date.now(),
+        bettingRound: prev.bettingRound,
       };
       addAction(actionRecord);
 

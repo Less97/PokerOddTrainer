@@ -60,6 +60,7 @@ export interface Action {
   action: PlayerAction;
   amount: number;
   timestamp: number;
+  bettingRound?: BettingRound;
 }
 
 export interface Pot {
