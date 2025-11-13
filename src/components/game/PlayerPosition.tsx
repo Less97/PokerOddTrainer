@@ -5,6 +5,7 @@
 
 import React from 'react';
 import type { Player, PlayerPosition as Position } from '../../types';
+import Card from './Card';
 
 interface PlayerPositionProps {
   player: Player;
@@ -51,21 +52,14 @@ const PlayerPosition: React.FC<PlayerPositionProps> = ({
         </div>
 
         {/* Hole Cards */}
-        <div className="flex gap-1 justify-center mb-2">
+        <div className="flex gap-1.5 justify-center mb-2">
           {player.holeCards.map((card, index) => (
-            <div
+            <Card
               key={index}
-              className="w-10 h-14 bg-white rounded border border-gray-300 flex items-center justify-center text-xs font-bold"
-            >
-              {position === 'hero' || player.isFolded ? (
-                <span className={card.suit === 'hearts' || card.suit === 'diamonds' ? 'text-red-600' : 'text-black'}>
-                  {card.rank}
-                  {card.suit[0].toUpperCase()}
-                </span>
-              ) : (
-                <span className="text-blue-600">🂠</span>
-              )}
-            </div>
+              card={card}
+              size="small"
+              faceDown={position !== 'hero' && !player.isFolded}
+            />
           ))}
         </div>
 
