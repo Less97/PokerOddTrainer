@@ -26,11 +26,17 @@ export class AIOpponent {
   public decide(player: Player, gameState: GameState): BetAction {
     const { bettingRound, currentBet, pot, communityCards, players, actionHistory } = gameState;
 
+    // Check if any player has gone all-in (prevents normal raises after all-in)
+    const hasAllInPlayer = players.some(p => p.isAllIn);
+
     // Check if raise cap has been reached (prevents endless raising wars)
     const raiseCapReached = hasReachedRaiseCap(
       actionHistory.map(a => ({ action: a.action, bettingRound: a.bettingRound })),
       bettingRound
     );
+
+    // Can't make normal raises if someone is all-in or cap reached
+    const canRaise = !hasAllInPlayer && !raiseCapReached;
 
     // Get player index
     const playerIndex = players.findIndex(p => p.position === player.position);
@@ -38,11 +44,11 @@ export class AIOpponent {
 
     // Pre-flop decisions
     if (bettingRound === 'preflop') {
-      return this.decidePreFlop(player, currentBet, pot, playerIndex, dealerIndex, raiseCapReached);
+      return this.decidePreFlop(player, currentBet, pot, playerIndex, dealerIndex, canRaise);
     }
 
     // Post-flop decisions
-    return this.decidePostFlop(player, currentBet, pot, communityCards, raiseCapReached);
+    return this.decidePostFlop(player, currentBet, pot, communityCards, canRaise);
   }
 
   /**
@@ -54,7 +60,7 @@ export class AIOpponent {
     pot: number,
     playerIndex: number,
     dealerIndex: number,
-    raiseCapReached: boolean
+    canRaise: boolean
   ): BetAction {
     const [card1, card2] = player.holeCards;
 
@@ -73,8 +79,8 @@ export class AIOpponent {
       return { type: 'fold' };
     }
 
-    // Determine if we should raise
-    const shouldRaise = !raiseCapReached && shouldRaiseHand(score, this.styleConfig.pfr, positionMultiplier);
+    // Determine if we should raise (only if no all-in player and cap not reached)
+    const shouldRaise = canRaise && shouldRaiseHand(score, this.styleConfig.pfr, positionMultiplier);
     const callAmount = currentBet - player.currentBet;
 
     // No bet yet - check or raise
@@ -87,8 +93,11 @@ export class AIOpponent {
 
     // Facing a bet/raise
     if (shouldRaise && adjustedScore >= 75) {
-      // Re-raise with strong hands (only if cap not reached)
+      // Re-raise with strong hands (only if normal raising is allowed)
       return this.determineRaiseSize(player, pot, adjustedScore);
+    } else if (!canRaise && adjustedScore >= 85 && this.shouldBeAggressive()) {
+      // Someone is all-in but we have a premium hand - go all-in ourselves
+      return { type: 'all-in' };
     } else if (adjustedScore >= 50 || this.shouldCall(callAmount, pot, adjustedScore)) {
       // Call with medium hands or good pot odds
       return { type: 'call', amount: callAmount };
@@ -105,7 +114,7 @@ export class AIOpponent {
     currentBet: number,
     pot: number,
     communityCards: Card[],
-    raiseCapReached: boolean
+    canRaise: boolean
   ): BetAction {
     const allCards = [...player.holeCards, ...communityCards];
     const myHand = evaluateHand(allCards);
@@ -118,40 +127,43 @@ export class AIOpponent {
     const potOdds = calculatePotOdds(pot, callAmount);
     const estimatedEquity = handStrength;
 
-    // Bluff check (only if cap not reached)
-    const shouldBluff = !raiseCapReached && this.shouldBluff(communityCards);
+    // Bluff check (only if raising is allowed)
+    const shouldBluff = canRaise && this.shouldBluff(communityCards);
 
     // No bet yet
     if (currentBet === player.currentBet) {
-      // Check if we should bet (only if cap not reached)
-      if (!raiseCapReached && handStrength >= 60 && this.shouldBeAggressive()) {
+      // Check if we should bet (only if raising is allowed)
+      if (canRaise && handStrength >= 60 && this.shouldBeAggressive()) {
         return this.determineRaiseSize(player, pot, handStrength);
       } else if (shouldBluff && this.styleConfig.aggression >= 6) {
-        // Bluff with weak hand (only if cap not reached)
+        // Bluff with weak hand (only if raising is allowed)
         return { type: 'raise', amount: Math.floor(pot * 0.5) };
       }
       return { type: 'check' };
     }
 
     // Facing a bet
-    if (!raiseCapReached && handStrength >= 75) {
-      // Strong hand - raise (only if cap not reached)
+    if (canRaise && handStrength >= 75) {
+      // Strong hand - raise (only if raising is allowed)
       if (this.shouldBeAggressive()) {
         return this.determineRaiseSize(player, pot, handStrength);
       }
       return { type: 'call', amount: callAmount };
-    } else if (!raiseCapReached && handStrength >= 50) {
-      // Medium hand - call or raise occasionally (only if cap not reached)
+    } else if (!canRaise && handStrength >= 85 && this.shouldBeAggressive()) {
+      // Someone is all-in but we have a very strong hand - go all-in ourselves
+      return { type: 'all-in' };
+    } else if (canRaise && handStrength >= 50) {
+      // Medium hand - call or raise occasionally (only if raising is allowed)
       if (this.shouldBeAggressive() && Math.random() < 0.3) {
         return this.determineRaiseSize(player, pot, handStrength);
       }
       return { type: 'call', amount: callAmount };
-    } else if (estimatedEquity > potOdds || shouldBluff) {
-      // Drawing hand with good odds or bluffing
-      if (shouldBluff && Math.random() < this.styleConfig.bluffFrequency) {
-        return this.determineRaiseSize(player, pot, 40);
-      }
+    } else if (handStrength >= 50 || estimatedEquity > potOdds) {
+      // Medium hand or drawing hand with good odds
       return { type: 'call', amount: callAmount };
+    } else if (shouldBluff && Math.random() < this.styleConfig.bluffFrequency) {
+      // Bluff (only if raising is allowed)
+      return this.determineRaiseSize(player, pot, 40);
     } else {
       return { type: 'fold' };
     }
