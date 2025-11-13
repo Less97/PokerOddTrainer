@@ -2,7 +2,7 @@
  * Main game state management hook
  */
 
-import { useState, useCallback, useEffect, useRef } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import type { GameState, Player, BetAction } from '../types';
 import { useDeck } from './useDeck';
 import { useHandHistory } from './useHandHistory';
@@ -37,24 +37,15 @@ export function useGameState(): UseGameStateReturn {
   const { deal, shuffleNewDeck } = useDeck();
   const { addAction, clearHistory } = useHandHistory();
 
-  const [gameState, setGameState] = useState<GameState>(() => initializeGame());
+  // Initialize AI opponents map outside of any closure
+  const [aiOpponentsMap] = useState(() => new Map<string, AIOpponent>());
 
-  // Store AI opponents
-  const aiOpponents = useRef<Map<string, AIOpponent>>(new Map());
+  const [gameState, setGameState] = useState<GameState>(() => initializeGame());
 
   /**
    * Initialize a new game with 4 players
    */
   function initializeGame(): GameState {
-    // Assign unique styles to opponents
-    const opponentStyles = assignOpponentStyles();
-
-    // Create AI opponents
-    opponentStyles.forEach((styleConfig, index) => {
-      const position = `opponent${index + 1}`;
-      aiOpponents.current.set(position, new AIOpponent(styleConfig));
-    });
-
     const players: Player[] = [
       {
         position: 'hero',
@@ -67,33 +58,30 @@ export function useGameState(): UseGameStateReturn {
       },
       {
         position: 'opponent1',
-        name: opponentStyles[0].name,
+        name: 'Opponent 1',
         stack: generateRandomStack(30, 200, BIG_BLIND),
         holeCards: [],
         currentBet: 0,
         isFolded: false,
         isAllIn: false,
-        style: opponentStyles[0].style,
       },
       {
         position: 'opponent2',
-        name: opponentStyles[1].name,
+        name: 'Opponent 2',
         stack: generateRandomStack(30, 200, BIG_BLIND),
         holeCards: [],
         currentBet: 0,
         isFolded: false,
         isAllIn: false,
-        style: opponentStyles[1].style,
       },
       {
         position: 'opponent3',
-        name: opponentStyles[2].name,
+        name: 'Opponent 3',
         stack: generateRandomStack(30, 200, BIG_BLIND),
         holeCards: [],
         currentBet: 0,
         isFolded: false,
         isAllIn: false,
-        style: opponentStyles[2].style,
       },
     ];
 
@@ -124,19 +112,47 @@ export function useGameState(): UseGameStateReturn {
     clearHistory();
     shuffleNewDeck();
 
+    // Initialize AI opponents if not already done
+    if (aiOpponentsMap.size === 0) {
+      const opponentStyles = assignOpponentStyles();
+      opponentStyles.forEach((styleConfig, index) => {
+        const position = `opponent${index + 1}`;
+        aiOpponentsMap.set(position, new AIOpponent(styleConfig));
+      });
+    }
+
     setGameState(prev => {
       // Move dealer button
       const newDealerIndex = (prev.dealerButtonIndex + 1) % prev.players.length;
       const blinds = getBlindPositions(prev.players.length, newDealerIndex);
 
-      // Reset players for new hand
-      const resetPlayers = prev.players.map(p => ({
+      // Update player names with styles on first hand
+      let resetPlayers = prev.players.map(p => ({
         ...p,
         holeCards: [],
         currentBet: 0,
         isFolded: false,
         isAllIn: false,
       }));
+
+      // Set AI opponent names and styles from their configs
+      if (prev.phase === 'waiting') {
+        const opponentPositions = ['opponent1', 'opponent2', 'opponent3'];
+        resetPlayers = resetPlayers.map(player => {
+          if (opponentPositions.includes(player.position)) {
+            const aiOpponent = aiOpponentsMap.get(player.position);
+            if (aiOpponent) {
+              const styleConfig = (aiOpponent as any).styleConfig;
+              return {
+                ...player,
+                name: styleConfig.name,
+                style: styleConfig.style,
+              };
+            }
+          }
+          return player;
+        });
+      }
 
       // Deal hole cards
       const playersWithCards = resetPlayers.map(player => ({
@@ -186,7 +202,7 @@ export function useGameState(): UseGameStateReturn {
         actionHistory: [],
       };
     });
-  }, [deal, shuffleNewDeck, clearHistory]);
+  }, [deal, shuffleNewDeck, clearHistory, aiOpponentsMap]);
 
   /**
    * Handle a player action
@@ -311,7 +327,7 @@ export function useGameState(): UseGameStateReturn {
     ) {
       // Add small delay for better UX
       const timeoutId = setTimeout(() => {
-        const aiOpponent = aiOpponents.current.get(currentPlayer.position);
+        const aiOpponent = aiOpponentsMap.get(currentPlayer.position);
         if (aiOpponent) {
           const action = aiOpponent.decide(currentPlayer, gameState);
           handlePlayerAction(action);
@@ -320,7 +336,7 @@ export function useGameState(): UseGameStateReturn {
 
       return () => clearTimeout(timeoutId);
     }
-  }, [gameState, handlePlayerAction]);
+  }, [gameState, handlePlayerAction, aiOpponentsMap]);
 
   /**
    * Check if it's hero's turn
