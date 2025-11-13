@@ -4,7 +4,7 @@
  */
 
 import React from 'react';
-import { CoachAnalysis as Analysis } from '../../types';
+import type { CoachAnalysis as Analysis } from '../../types';
 
 interface CoachAnalysisProps {
   analysis: Analysis;

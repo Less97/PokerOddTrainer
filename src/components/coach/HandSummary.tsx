@@ -4,7 +4,7 @@
  */
 
 import React from 'react';
-import { HandResult } from '../../types';
+import type { HandResult } from '../../types';
 
 interface HandSummaryProps {
   result: HandResult;

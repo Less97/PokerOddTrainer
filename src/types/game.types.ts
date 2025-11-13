@@ -2,7 +2,7 @@
  * Game state and player type definitions
  */
 
-import {
+import type {
   Card,
   PlayerPosition,
   PlayerStyle,

@@ -3,8 +3,8 @@
  * Allows easy switching between different LLM providers
  */
 
-import { LLMConfig } from '../../types';
-import { ICoachLLM } from './ICoachLLM';
+import type { LLMConfig } from '../../types';
+import type { ICoachLLM } from './ICoachLLM';
 import { ClaudeCoach } from './ClaudeCoach';
 import { OpenAICoach } from './OpenAICoach';
 

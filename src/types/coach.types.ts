@@ -2,7 +2,7 @@
  * AI Coach and analysis type definitions
  */
 
-import { Action, BettingRound, Card, PlayerPosition } from './poker.types';
+import type { Action, BettingRound, Card, PlayerPosition } from './poker.types';
 
 export type Grade = 'A' | 'B' | 'C' | 'D' | 'F';
 

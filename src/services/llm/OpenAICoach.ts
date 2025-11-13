@@ -2,8 +2,8 @@
  * OpenAI implementation of the poker coach
  */
 
-import { CoachAnalysis, HandHistory, Grade } from '../../types';
-import { ICoachLLM } from './ICoachLLM';
+import type { CoachAnalysis, HandHistory, Grade } from '../../types';
+import type { ICoachLLM } from './ICoachLLM';
 
 export class OpenAICoach implements ICoachLLM {
   private apiKey: string;
@@ -49,7 +49,7 @@ export class OpenAICoach implements ICoachLLM {
       const analysisText = data.choices[0].message.content;
 
       // Parse the LLM response into structured CoachAnalysis
-      return this.parseAnalysis(analysisText, handHistory);
+      return this.parseAnalysis(analysisText);
     } catch (error) {
       console.error('Error calling OpenAI API:', error);
       throw error;
@@ -159,7 +159,7 @@ Just say whether the hero played well or not. Be encouraging and friendly.`;
     return actions.map(a => `${a.player} ${a.action} $${a.amount || 0}`).join('\n');
   }
 
-  private parseAnalysis(analysisText: string, handHistory: HandHistory): CoachAnalysis {
+  private parseAnalysis(analysisText: string): CoachAnalysis {
     try {
       // Try to extract JSON from the response
       const jsonMatch = analysisText.match(/\{[\s\S]*\}/);

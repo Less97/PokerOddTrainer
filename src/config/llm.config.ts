@@ -3,7 +3,7 @@
  * Set your API keys and preferred provider here
  */
 
-import { LLMConfig } from '../types';
+import type { LLMConfig } from '../types';
 
 export const llmConfig: LLMConfig = {
   // Default provider - can be changed to 'openai' or 'local'
