@@ -2,7 +2,7 @@
  * Main game state management hook
  */
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import type { GameState, Player, BetAction } from '../types';
 import { useDeck } from './useDeck';
 import { useHandHistory } from './useHandHistory';
@@ -18,6 +18,7 @@ import {
   getFirstPostFlopPlayer,
   calculateMinRaise,
 } from '../utils/pokerLogic';
+import { AIOpponent, assignOpponentStyles } from '../services/ai';
 
 const SMALL_BLIND = 0.5;
 const BIG_BLIND = 1;
@@ -38,10 +39,22 @@ export function useGameState(): UseGameStateReturn {
 
   const [gameState, setGameState] = useState<GameState>(() => initializeGame());
 
+  // Store AI opponents
+  const aiOpponents = useRef<Map<string, AIOpponent>>(new Map());
+
   /**
    * Initialize a new game with 4 players
    */
   function initializeGame(): GameState {
+    // Assign unique styles to opponents
+    const opponentStyles = assignOpponentStyles();
+
+    // Create AI opponents
+    opponentStyles.forEach((styleConfig, index) => {
+      const position = `opponent${index + 1}`;
+      aiOpponents.current.set(position, new AIOpponent(styleConfig));
+    });
+
     const players: Player[] = [
       {
         position: 'hero',
@@ -54,30 +67,33 @@ export function useGameState(): UseGameStateReturn {
       },
       {
         position: 'opponent1',
-        name: 'Opponent 1',
+        name: opponentStyles[0].name,
         stack: generateRandomStack(30, 200, BIG_BLIND),
         holeCards: [],
         currentBet: 0,
         isFolded: false,
         isAllIn: false,
+        style: opponentStyles[0].style,
       },
       {
         position: 'opponent2',
-        name: 'Opponent 2',
+        name: opponentStyles[1].name,
         stack: generateRandomStack(30, 200, BIG_BLIND),
         holeCards: [],
         currentBet: 0,
         isFolded: false,
         isAllIn: false,
+        style: opponentStyles[1].style,
       },
       {
         position: 'opponent3',
-        name: 'Opponent 3',
+        name: opponentStyles[2].name,
         stack: generateRandomStack(30, 200, BIG_BLIND),
         holeCards: [],
         currentBet: 0,
         isFolded: false,
         isAllIn: false,
+        style: opponentStyles[2].style,
       },
     ];
 
@@ -278,6 +294,33 @@ export function useGameState(): UseGameStateReturn {
       };
     });
   }, [addAction, deal]);
+
+  /**
+   * Process AI opponent turn
+   */
+  useEffect(() => {
+    const currentPlayer = gameState.players[gameState.currentPlayerIndex];
+
+    // Only process if game is in betting phase and it's an AI opponent's turn
+    if (
+      gameState.phase === 'betting' &&
+      currentPlayer &&
+      currentPlayer.position !== 'hero' &&
+      !currentPlayer.isFolded &&
+      !currentPlayer.isAllIn
+    ) {
+      // Add small delay for better UX
+      const timeoutId = setTimeout(() => {
+        const aiOpponent = aiOpponents.current.get(currentPlayer.position);
+        if (aiOpponent) {
+          const action = aiOpponent.decide(currentPlayer, gameState);
+          handlePlayerAction(action);
+        }
+      }, 1000); // 1 second delay
+
+      return () => clearTimeout(timeoutId);
+    }
+  }, [gameState, handlePlayerAction]);
 
   /**
    * Check if it's hero's turn
