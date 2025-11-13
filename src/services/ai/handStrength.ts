@@ -100,13 +100,13 @@ export function adjustForPosition(
 ): number {
   switch (position) {
     case 'early':
-      return baseScore * 0.8;  // Much tighter in early position
+      return baseScore * 0.92;  // Slightly tighter in early position
     case 'middle':
-      return baseScore * 0.9;  // Slightly tighter
+      return baseScore * 0.96;  // A bit tighter
     case 'late':
-      return baseScore * 1.1;  // Looser
+      return baseScore * 1.04;  // A bit looser
     case 'button':
-      return baseScore * 1.2;  // Much looser on button
+      return baseScore * 1.08;  // Looser on button
     default:
       return baseScore;
   }
@@ -147,8 +147,9 @@ export function shouldPlayHand(
   const adjustedScore = handScore * positionAdjustment;
 
   // VPIP represents % of hands played
-  // Convert to threshold: if VPIP is 20%, play hands with score >= 80
-  const threshold = 100 - vpip;
+  // Convert to threshold with slight adjustment for better gameplay
+  // If VPIP is 20%, threshold is ~78 (slightly more liberal)
+  const threshold = (100 - vpip) * 0.95;
 
   return adjustedScore >= threshold;
 }
@@ -164,7 +165,7 @@ export function shouldRaiseHand(
   const adjustedScore = handScore * positionAdjustment;
 
   // PFR represents % of hands raised pre-flop
-  const threshold = 100 - pfr;
+  const threshold = (100 - pfr) * 0.95;
 
   return adjustedScore >= threshold;
 }

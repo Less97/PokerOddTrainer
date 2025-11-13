@@ -263,10 +263,10 @@ export class AIOpponent {
    */
   private getPositionMultiplier(position: 'early' | 'middle' | 'late' | 'button'): number {
     switch (position) {
-      case 'early': return 0.8;
-      case 'middle': return 0.9;
-      case 'late': return 1.1;
-      case 'button': return 1.2;
+      case 'early': return 0.92;
+      case 'middle': return 0.96;
+      case 'late': return 1.04;
+      case 'button': return 1.08;
       default: return 1.0;
     }
   }
