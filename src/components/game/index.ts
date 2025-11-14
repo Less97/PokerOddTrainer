@@ -8,3 +8,4 @@ export { default as CommunityCards } from './CommunityCards';
 export { default as ActionControls } from './ActionControls';
 export { default as ActionLog } from './ActionLog';
 export { default as Card } from './Card';
+export { default as ActionNotification } from './ActionNotification';

@@ -226,6 +226,7 @@ export function useGameState(): UseGameStateReturn {
       // Record action
       const actionRecord = {
         player: currentPlayer.position,
+        playerName: currentPlayer.name,
         action: action.type,
         amount: action.amount || 0,
         timestamp: Date.now(),

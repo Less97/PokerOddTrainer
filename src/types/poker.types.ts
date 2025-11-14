@@ -57,6 +57,7 @@ export type PlayerAction =
 
 export interface Action {
   player: PlayerPosition;
+  playerName: string;
   action: PlayerAction;
   amount: number;
   timestamp: number;
