@@ -3,7 +3,7 @@
  */
 
 import { useGameState } from './hooks';
-import { PokerTable, ActionControls, ActionLog } from './components/game';
+import { PokerTable, ActionControls, ActionLog, ActionNotification } from './components/game';
 import type { BetAction } from './types';
 import { canCheck } from './utils/pokerLogic';
 
@@ -109,6 +109,8 @@ function App() {
                   minRaise={gameState.minRaise}
                   canCheck={canCheck(heroPlayer, gameState.currentBet)}
                   onAction={handleAction}
+                  bigBlind={gameState.bigBlind}
+                  isPreFlop={gameState.bettingRound === 'preflop'}
                 />
               </div>
             )}
@@ -146,8 +148,23 @@ function App() {
             )}
           </main>
 
-          {/* Right Sidebar - Action Log */}
-          <aside className="lg:col-span-1">
+          {/* Right Sidebar - Action Notification & Log */}
+          <aside className="lg:col-span-1 space-y-4">
+            {/* Visual notification of current action */}
+            {gameState.phase !== 'waiting' && (
+              <ActionNotification
+                latestAction={gameState.actionHistory[gameState.actionHistory.length - 1] || null}
+                currentPlayerName={
+                  gameState.phase === 'betting'
+                    ? gameState.players[gameState.currentPlayerIndex]?.name || null
+                    : null
+                }
+                bettingRound={gameState.bettingRound}
+                pot={gameState.pot}
+              />
+            )}
+
+            {/* Full action history */}
             <ActionLog actions={gameState.actionHistory} />
           </aside>
         </div>

@@ -12,7 +12,7 @@ interface ActionLogProps {
 
 const ActionLog: React.FC<ActionLogProps> = ({ actions }) => {
   const formatAction = (action: Action): string => {
-    const playerName = action.player.replace('opponent', 'Player ');
+    const playerName = action.playerName;
 
     switch (action.action) {
       case 'fold':
