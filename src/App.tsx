@@ -109,6 +109,8 @@ function App() {
                   minRaise={gameState.minRaise}
                   canCheck={canCheck(heroPlayer, gameState.currentBet)}
                   onAction={handleAction}
+                  bigBlind={gameState.bigBlind}
+                  isPreFlop={gameState.bettingRound === 'preflop'}
                 />
               </div>
             )}
